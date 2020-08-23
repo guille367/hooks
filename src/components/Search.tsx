@@ -3,31 +3,75 @@ import axios from "axios";
 import Accordion from "./Accordion";
 
 function Search() {
-  const [term, setTerm] = useState("");
+  const [term, setTerm] = useState("programming");
+  const [debouncedTerm, setDebouncedTerm] = useState(term);
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    (async () => {
-      if (term) {
-        const { data } = await axios.get("https://en.wikipedia.org/w/api.php", {
-          params: {
-            action: "query",
-            list: "search",
-            origin: "*",
-            format: "json",
-            srsearch: term,
-          },
-        });
-        const res = data.query.search.map((wikitem: any) => {
-          return {
-            title: wikitem.title,
-            content: wikitem.snippet,
-          };
-        });
-        setResults(res);
-      }
-    })();
+    const timeoutId = setTimeout(() => {
+      setDebouncedTerm(term);
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
   }, [term]);
+
+  useEffect(() => {
+    const search = async () => {
+      const { data } = await axios.get("https://en.wikipedia.org/w/api.php", {
+        params: {
+          action: "query",
+          list: "search",
+          origin: "*",
+          format: "json",
+          srsearch: debouncedTerm,
+        },
+      });
+      const res = data.query.search.map((wikitem: any) => {
+        return {
+          title: wikitem.title,
+          content: wikitem.snippet,
+        };
+      });
+      setResults(res);
+    };
+
+    search();
+  }, [debouncedTerm]);
+
+  // useEffect(() => {
+  //   const search = async () => {
+  //     const { data } = await axios.get("https://en.wikipedia.org/w/api.php", {
+  //       params: {
+  //         action: "query",
+  //         list: "search",
+  //         origin: "*",
+  //         format: "json",
+  //         srsearch: term,
+  //       },
+  //     });
+  //     const res = data.query.search.map((wikitem: any) => {
+  //       return {
+  //         title: wikitem.title,
+  //         content: wikitem.snippet,
+  //       };
+  //     });
+  //     setResults(res);
+  //   };
+
+  //   if (term && !results.length) {
+  //     search();
+  //   } else {
+  //     const timeoutId = setTimeout(() => {
+  //       if (term) {
+  //         search();
+  //       }
+  //     }, 500);
+
+  //     return () => clearInterval(timeoutId);
+
+  //   }
+  // }, [term]);
+
 
   return (
     <div>
